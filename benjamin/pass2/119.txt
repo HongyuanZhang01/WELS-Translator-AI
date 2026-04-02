@@ -1,0 +1,185 @@
+Látták: a szegény ember elő van készítve az evangéliumra. Most is ugyanolyan istentelen, mint előbb. Még nincs gyűlölete a bűnnek. Erről minderről nem beszél. Csak azt akarja, hogy ne kapja meg a bűn büntetését, hanem boldog, üdvözült sorsot nyerjen a sír túloldalán. De mindezek ellenére olvassuk a 31–33. verseket: „Mondák: Higyj az Úr Jézus Krisztusban, és üdvözülhetsz te és a te házad." És hirdették néki az Úr szavát, és mindazoknak, a kik a házában valának. És ő felvén őket azon éjszaka, lemossa sebeit, és megkeresztelkedik, és mind az övéi azonnal. Még azon éjszaka megtér, hitre jut, és a kegyelem bizonyosságára és a kiengesztelésre Istennel. Isten szeretett gyermekévé válik. És mit alkalmaztak az apostolok? Semmi mást, mint hogy feltétel nélkül hirdették néki az evangéliumot. Minden feltétel nélkül mondják: „Higgy az Úr Jézus Krisztusban!" Itt látjuk, milyen gyakorlat volt az apostoloké. És mindig, amint a szó által a hit megtermeltetett, azonnal követte a keresztség. Az apostolok nem mondták: „Most először egy hosszú tanfolyamot kell végigcsinálnunk veled, hogy pontosan és alaposan megismerd a keresztény hit cikkeit, és aztán egy próbaidőt kell adnunk, melyben megmutathatod magad" – semmi ilyesmi!
+
+============================================================
+DEBUG — GLOSSARY TERMS INJECTED FOR THIS CHUNK
+============================================================
+Artikel des christlichen Glaubens → a keresztény hit cikkei
+Artikel des Glaubens → hitcikk
+Christum und den Glauben an ihn → Krisztus és az Ő iránti hit
+Das Evangelium → az evangélium
+Dein Wort soll mir gewisser sein → Isten igéje legyen nekem bizonyosabb
+Gewißheit der Gnade → a kegyelem bizonyossága
+Gewißheit des Glaubens → hitbizonyosság
+Glauben an Christum → hitben Krisztusban
+Glaube an den Herrn JEsum Christum → hitben a mi Urunk Jézus Krisztusban
+Gnade nicht Gnade sein → kegyelem nem kegyelem
+Gott der Versöhnung → A kiengesztelés Istene
+Gott nicht → Még Isten sem
+Gottes Kind → Isten gyermeke
+Gottes Kinder → Isten gyermekei
+Herr, Herr → Uram, Uram
+Herr JEsum Christum → Jézus Krisztus Úr
+Herrn Jesum → Jézus Urunk
+Herrn Jesum Christum → Jézus Krisztus Urat
+Jesum Christum → Jézus Krisztust
+Kind Gottes → Isten gyermeke
+Kinder Gottes → Isten gyermekei
+Mensch werden → emberré lés
+Selig werden → üdvözülni
+Streitigen Artikeln → vitatott cikkeken
+Versöhnung mit Gott → kiengesztelés Istennel
+alles, das sie haben → minden, amit birtokolnak
+arme Mensch → szegény ember
+aus Glauben in Glauben → hitből hitre
+aus Gnaden → kegyelemből
+aus dem Glauben → a hitből
+aus lauter Gnade → kizárólag kegyelemből
+aus lauter Gnaden → tiszta kegyelemből
+das Wort → Ige
+durch und mit dem Wort → a szó által és a szóval
+im Glauben → hitben
+in Gnaden → kegyelemből
+in Gnade sein → kegyelemben lenni
+in der Taufe → a keresztségben
+liebes Kind Gottes → Isten szeretett gyermeke
+nicht glauben dürfen → nem hihet
+nicht glauben können → hitre képtelen
+nicht glauben können mit nicht glauben dürfen → nem hihetnek és nem hihetnének
+selig wird → üdvözül
+selig wurden → üdvözültek
+selig zu werden → üdvösségre jutni
+seliges Loos → boldog sors
+wahrhaftigen Gott → igazi Isten
+wegen des Glaubens → a hit miatt
+Segen → áldás
+Geben → adományoz
+Mensch → ember
+Menschen → ember
+Vorbereiten → előkészítés
+Zugreifen → elfogadás
+Evangelium → evangélium
+Evangeliums → evangélium
+Netze → háló
+Noth → szűkölés
+gottlos → Istenellenes
+gottlose → istentelen
+Amen → Ámen
+Gabe → ajándék
+Kain → Káin
+Kern → lényeg
+Haß → gyűlölet
+haßt → gyűlöl
+Regen → eső
+Gebet → imádság
+Sünde → bűn
+Sünden → bűnök
+Altar → oltár
+Acker → mező
+Sprüche → igeszakaszok
+brechen → szétrombol
+Licht → világosság
+Knecht → szolga
+richten → kárhoztat
+Kur → gyógyítás
+Strafe → büntetés
+Straft → büntet
+Donnern → döbbenet
+Kindern → gyermekek
+selig → üdvözült
+Eselin → szamár
+Loos → sors
+los → megoldott
+Erbe → örökség
+Glaube → hit
+Trost → vigasztalás
+Leben → élet
+Wesen → lényeg
+Glauben → hit
+glaubet → hisz
+Herr → Uram
+Herz → szív
+Jesu → Jézus
+Pensum → feladat
+Christum → Krisztusért
+Christus → Krisztus
+Durst → lelki szomjúság
+Hirt → pásztor
+Bund → szövetség
+Mund → szó
+Haus → család
+Zagen → Istenfélelem
+Namen → név
+Wort → szó / Isten Igéje [USE CONTEXT]
+Worte → igék
+Lehren → tanítás
+annehmen → elfogad
+Munde → száj
+Macht → hatalom
+Racha → Raca
+Klassen → osztályok
+Fasten → böjt
+taufen → megkeresztel
+Kaufen → megvásárolni
+Heiden → népek
+Warten → várakozás
+bekehret → megkeresztelt
+bekehren → megtérés
+Dogmen → tanok
+Frommen → Istenfélők
+Unglauben → hitetlenség
+glaubt → hisz
+Gewißheit → bizonyosság
+Gewissheit → bizonyosság
+Gnade → kegyelem
+Gnaden → kegyelem
+Versöhnung → kiengesztelés
+Vermahnung → buzdítás
+Gott → Isten
+Liebe → szeretet
+Lied → dicsőítő ének
+Kind → gyermek
+Wind → szél
+Apostel → apostol
+Aposteln → apostolok
+Anwendung → alkalmazás
+Elenden → szegények
+Eiter → genny
+Eifer → Isteni buzgalom
+unverklausulirt → feltétel nélküli
+unverclausulirt → feltétel nélküli
+verkündigen → kijelent
+verkündigt → kijelenti
+Bedingung → feltétel
+Besinnung → megeszmélés
+Weg → Üdvösség útja
+Werk → érdem
+Praxis → gyakorlat
+Hammer → kalapács
+Himmel → mennyország
+Furcht → félelem
+Hirten → pásztor
+Linken → bal
+Felsen → kőszikla
+tilgen → törlés
+Taufe → keresztség
+tauft → keresztel
+Messe → misé
+Mosen → Mózes
+Ernst → szentség
+Cursus → tanfolyam
+usus → használat
+Schmach → szégyen
+Amt → hivatal
+David → Dávid
+Artikel → hitcikk
+Endchristlich → keresztényellenes
+geistlich → lelki
+greulich → borzalmas
+Bann → kizárás
+Probezeit → próbaidő
+Gebot → parancsolat
+reuen → bűnbánat
+Bekehrten → megújultak
+beichten → gyónás
+angst → félelem
+Kunst → lelki mesterség

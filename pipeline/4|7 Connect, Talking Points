@@ -1,21 +1,19 @@
 ================================================================================
-  TALKING POINTS — Meeting with Alexander
+  TALKING POINTS
   April 7, 2026
   Topic: Pipeline results on full Augsburg Confession (Hungarian)
 ================================================================================
 
-
 --- WHERE WE ARE ---
 
-- We ran the ENTIRE Augsburg Confession through the pipeline (all 70 chunks,
-  28 articles) in Hungarian
-- Three batches: chunks 1-3, then 4-25, then 26-70
-- Everything ran successfully — translation, evaluation, improvement loops, all
-  of it end-to-end
+- We ran the ENTIRE Augsburg Confession through the pipeline (broken into 70 chunks, including 28 articles) in Hungarian
+- Three batches: chunks 1-3, then 4-25, then 26-70 
+- Everything ran successfully — translation, evaluation, improvement loops, etc.
 
 
---- THE NUMBERS ---
+--- THE RESULTS ---
 
+  NOTE: The chunks are from the AUGSBURG CONFESSION
   Batch 1 (chunks 1-3):     avg 4.46 / 5.0
   Batch 2 (chunks 4-25):    avg 4.78 / 5.0
   Batch 3 (chunks 26-70):   avg 4.72 / 5.0
@@ -52,7 +50,7 @@
    - All differences rated as "minor" — no doctrinal content lost
 
 
---- WHERE WE NEED TO IMPROVE ---
+--- IMPROVEMENT AREAS ---
 
 1. NATURALNESS (biggest gap)
    - Almost every chunk scores 4.0 on naturalness
@@ -81,20 +79,20 @@
 1. Should we build the naturalness polish pass now, or is 4.7 avg good enough
    for the team demo?
 
-2. Who should review the glossary — do we ask Jonathan, or does Xander know
-   someone who speaks Hungarian?
+2. Who should review the glossary?
 
-3. Are we ready to show this to Benjamin and Jonathan?
+3. Ready for an initial sampled demonstration?
    - We have the full Augsburg Confession translated
    - We have Excel reports with detailed scoring
    - We have chunk 003 as a perfect example (5.0/5.0)
 
-4. What's next after Hungarian?
+4. What are next possible languages?
    - Spanish? (high-resource, should score even better)
    - Hmong? (low-resource, will be the real stress test)
 
-5. Budget check: the 70 chunks cost roughly $9-10 in API credits per full run
+5. Budget check: the 70 chunks cost roughly $30-40 in API credits per full run
    (Claude Opus for translation, Sonnet for evaluation)
+   - The development and testing of pipeline structure cost an additional $10-20 so far.
 
 
 --- FILES TO REFERENCE ---

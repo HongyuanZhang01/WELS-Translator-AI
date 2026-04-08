@@ -1,0 +1,69 @@
+================================================================================
+  WELS AI Translation Pipeline — Team Example
+  Chunk 003: Article III — Of the Son of God
+  Language: English → Hungarian
+  Generated: April 6, 2026
+  Evaluation Score: 5.0 / 5.0 (PERFECT across all dimensions)
+================================================================================
+
+
+--- ORIGINAL ENGLISH ---
+
+Article III: Of the Son of God.
+
+Also they teach that the Word, that is, the Son of God, did assume the human
+nature in the womb of the blessed Virgin Mary, so that there are two natures,
+the divine and the human, inseparably conjoined in one Person, one Christ, true
+God and true man, who was born of the Virgin Mary, truly suffered, was
+crucified, dead, and buried, that He might reconcile the Father unto us, and be
+a sacrifice, not only for original guilt, but also for all actual sins of men.
+
+He also descended into hell, and truly rose again the third day; afterward He
+ascended into heaven that He might sit on the right hand of the Father, and
+forever reign and have dominion over all creatures, and sanctify them that
+believe in Him, by sending the Holy Ghost into their hearts, to rule, comfort,
+and quicken them, and to defend them against the devil and the power of sin.
+
+The same Christ shall openly come again to judge the quick and the dead, etc.,
+according to the Apostles' Creed.
+
+
+--- HUNGARIAN TRANSLATION (AI-Generated) ---
+
+III. cikk: Isten Fiáról.
+
+Továbbá azt tanítják, hogy az Ige, azaz Isten Fia, felvette az emberi
+természetet a boldogságos Szűz Mária méhében, úgyhogy két természet, az isteni
+és az emberi, elválaszthatatlanul egyesült egy Személyben, egy Krisztusban,
+valóságos Istenben és valóságos emberben, aki Szűz Máriától született,
+valóságosan szenvedett, megfeszíttetett, meghalt és eltemettetett, hogy az Atyát
+megengesztelje irántunk, és áldozat legyen nemcsak az áteredő bűnért, hanem az
+emberek összes személyes bűnéért is.
+
+Alászállt a poklokra is, és harmadnapon valóságosan feltámadott; azután felment
+a mennybe, hogy az Atya jobbján üljön, és örökké uralkodjék és úr legyen minden
+teremtmény felett, és megszentelje azokat, akik hisznek benne, azáltal, hogy a
+Szentlelket szívükbe küldi, hogy vezérelje, vigasztalja és megelevenítse őket,
+és megoltalmazza őket az ördög és a bűn hatalma ellen.
+
+Ugyanez a Krisztus nyilvánosan újra eljön, hogy ítélje az élőket és a holtakat,
+stb., az Apostoli Hitvallás szerint.
+
+
+--- EVALUATION SUMMARY ---
+
+  Doctrinal Accuracy:        5.0 / 5.0
+  Terminology Consistency:   5.0 / 5.0
+  Clarity:                   5.0 / 5.0
+  Naturalness:               5.0 / 5.0
+  Weighted Score:             5.0 / 5.0
+
+  Back-Translation Check:    Meaning PRESERVED
+  Critical Errors:           None
+
+  Pipeline Stage:            After 1 improvement loop (pipeline_loop1)
+
+================================================================================
+  This translation was produced by the WELS AI Translation Pipeline.
+  Model: Claude Opus 4.6 (translation) | Claude Sonnet 4.6 (evaluation)
+================================================================================

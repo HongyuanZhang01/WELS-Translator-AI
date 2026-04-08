@@ -1,0 +1,114 @@
+================================================================================
+  TALKING POINTS — Meeting with Alexander
+  April 7, 2026
+  Topic: Pipeline results on full Augsburg Confession (Hungarian)
+================================================================================
+
+
+--- WHERE WE ARE ---
+
+- We ran the ENTIRE Augsburg Confession through the pipeline (all 70 chunks,
+  28 articles) in Hungarian
+- Three batches: chunks 1-3, then 4-25, then 26-70
+- Everything ran successfully — translation, evaluation, improvement loops, all
+  of it end-to-end
+
+
+--- THE NUMBERS ---
+
+  Batch 1 (chunks 1-3):     avg 4.46 / 5.0
+  Batch 2 (chunks 4-25):    avg 4.78 / 5.0
+  Batch 3 (chunks 26-70):   avg 4.72 / 5.0
+
+  Overall across all 70:    ~4.72 / 5.0
+  Perfect 5.0 scores:       7 chunks total
+  Above 4.5:                ~62 out of 70
+  Below 4.0:                1 chunk (054, scored 3.75)
+  JSON parse failures:      1 (chunk 019, but the translation itself was fine)
+
+  Doctrinal accuracy:       Almost all chunks hit 5.0
+  Terminology consistency:  Almost all chunks hit 5.0
+  Clarity:                  Mostly 4.0-5.0
+  Naturalness:              Consistently the weakest — almost always 4.0
+
+
+--- WHAT'S WORKING ---
+
+1. TRANSLATOR is strong on first pass
+   - 90%+ of chunks needed ZERO improvement loops
+   - Glossary enforcement is working — terms are being used correctly
+
+2. VERIFIED IMPROVEMENT SYSTEM works
+   - Glossary regression detector blocked bad "improvements" multiple times
+   - Score regression guard reverted to best version when scores dropped
+   - When improvements were accepted, scores went UP (e.g. chunk 013: 3.12 → 4.65)
+
+3. DUAL-PASS EVALUATION is consistent
+   - Very few tiebreakers needed
+   - Two evaluation passes almost always agreed within 1 point
+
+4. BACK-TRANSLATION confirms accuracy
+   - Meaning preserved on every single chunk
+   - All differences rated as "minor" — no doctrinal content lost
+
+
+--- WHERE WE NEED TO IMPROVE ---
+
+1. NATURALNESS (biggest gap)
+   - Almost every chunk scores 4.0 on naturalness
+   - The AI prioritizes accuracy over flow — correct tradeoff, but we can do better
+   - PROPOSAL: Add a "naturalness polish" pass — a second AI call that smooths
+     the Hungarian phrasing WITHOUT touching glossary terms or doctrine
+
+2. GLOSSARY AMBIGUITIES (causes critical errors)
+   - "devil" singular vs "devils" plural — glossary says "ördögök" (plural) but
+     some passages clearly mean Satan (singular "ördög")
+   - A few compound glossary entries conflict with individual entries
+   - PROPOSAL: Have the team (Jonathan? a Hungarian speaker?) review the glossary
+     for context-dependent terms
+
+3. CHUNK 054 (lowest score — 3.75)
+   - Needs investigation — 2 critical errors
+   - May be a complex passage that needs special handling
+
+4. ONE JSON PARSE FAILURE (chunk 019)
+   - Translation was actually fine, just the eval report has a gap
+   - Low priority fix
+
+
+--- DECISIONS TO MAKE TOGETHER ---
+
+1. Should we build the naturalness polish pass now, or is 4.7 avg good enough
+   for the team demo?
+
+2. Who should review the glossary — do we ask Jonathan, or does Xander know
+   someone who speaks Hungarian?
+
+3. Are we ready to show this to Benjamin and Jonathan?
+   - We have the full Augsburg Confession translated
+   - We have Excel reports with detailed scoring
+   - We have chunk 003 as a perfect example (5.0/5.0)
+
+4. What's next after Hungarian?
+   - Spanish? (high-resource, should score even better)
+   - Hmong? (low-resource, will be the real stress test)
+
+5. Budget check: the 70 chunks cost roughly $9-10 in API credits per full run
+   (Claude Opus for translation, Sonnet for evaluation)
+
+
+--- FILES TO REFERENCE ---
+
+  Excel reports:
+    pipeline/data/evaluation_report_hungarian.xlsx         (batch 1, chunks 1-3)
+    pipeline/data/evaluation_report_hungarian_batch3.xlsx   (batch 3, chunks 26-70)
+
+  Team example:
+    pipeline/chunk_003_team_example.txt     (perfect 5.0 — Article III)
+    pipeline/chunk_001_team_review.txt      (for team to spot-check)
+
+  Raw data:
+    pipeline/data/evaluations_hungarian_*.json
+    pipeline/data/translations_hungarian_*_final.json
+
+================================================================================

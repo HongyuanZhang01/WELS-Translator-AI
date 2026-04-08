@@ -1,0 +1,101 @@
+[
+  {
+    "chunk_id": "007",
+    "loop": 1,
+    "before_scores": {
+      "doctrinal_accuracy": 4.0,
+      "terminology_consistency": 5.0,
+      "weighted_score": 4.35
+    },
+    "issues_addressed": 7,
+    "accepted": true,
+    "attempts": 1,
+    "rejection_reasons": []
+  },
+  {
+    "chunk_id": "007",
+    "loop": 2,
+    "before_scores": {
+      "doctrinal_accuracy": 4.5,
+      "terminology_consistency": 5.0,
+      "weighted_score": 4.65
+    },
+    "issues_addressed": 5,
+    "accepted": true,
+    "attempts": 1,
+    "rejection_reasons": []
+  },
+  {
+    "chunk_id": "007",
+    "loop": 3,
+    "before_scores": {
+      "doctrinal_accuracy": 4.5,
+      "terminology_consistency": 5.0,
+      "weighted_score": 4.65
+    },
+    "issues_addressed": 5,
+    "accepted": true,
+    "attempts": 1,
+    "rejection_reasons": []
+  },
+  {
+    "chunk_id": "009",
+    "loop": 1,
+    "before_scores": {
+      "doctrinal_accuracy": 4.5,
+      "terminology_consistency": 5.0,
+      "weighted_score": 4.38
+    },
+    "issues_addressed": 5,
+    "accepted": false,
+    "attempts": 2,
+    "rejection_reasons": [
+      "Glossary regression: 2 approved term(s) were removed or changed",
+      "Glossary regression: 1 approved term(s) were removed or changed"
+    ]
+  },
+  {
+    "chunk_id": "013",
+    "loop": 1,
+    "before_scores": {
+      "doctrinal_accuracy": 3.0,
+      "terminology_consistency": 3.5,
+      "weighted_score": 3.12
+    },
+    "issues_addressed": 8,
+    "accepted": true,
+    "attempts": 2,
+    "rejection_reasons": []
+  },
+  {
+    "chunk_id": "020",
+    "loop": 1,
+    "before_scores": {
+      "doctrinal_accuracy": 4.0,
+      "terminology_consistency": 4.5,
+      "weighted_score": 4.33
+    },
+    "issues_addressed": 6,
+    "accepted": false,
+    "attempts": 2,
+    "rejection_reasons": [
+      "Improver returned unchanged text"
+    ]
+  },
+  {
+    "chunk_id": "025",
+    "loop": 1,
+    "before_scores": {
+      "doctrinal_accuracy": 4.0,
+      "terminology_consistency": 5.0,
+      "weighted_score": 4.35
+    },
+    "issues_addressed": 7,
+    "accepted": false,
+    "attempts": 2,
+    "rejection_reasons": [
+      "Glossary regression: 3 approved term(s) were removed or changed",
+      "Glossary regression: 1 approved term(s) were removed or changed"
+    ]
+  }
+]

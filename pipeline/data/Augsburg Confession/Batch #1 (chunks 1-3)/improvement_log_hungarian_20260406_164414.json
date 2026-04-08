@@ -1,0 +1,70 @@
+[
+  {
+    "chunk_id": "001",
+    "loop": 1,
+    "before_scores": {
+      "doctrinal_accuracy": 4.0,
+      "terminology_consistency": 4.0,
+      "weighted_score": 4.0
+    },
+    "issues_addressed": 14,
+    "accepted": true,
+    "attempts": 2,
+    "rejection_reasons": []
+  },
+  {
+    "chunk_id": "001",
+    "loop": 2,
+    "before_scores": {
+      "doctrinal_accuracy": 4.0,
+      "terminology_consistency": 4.0,
+      "weighted_score": 4.0
+    },
+    "issues_addressed": 14,
+    "accepted": true,
+    "attempts": 2,
+    "rejection_reasons": []
+  },
+  {
+    "chunk_id": "001",
+    "loop": 3,
+    "before_scores": {
+      "doctrinal_accuracy": 4.5,
+      "terminology_consistency": 4.0,
+      "weighted_score": 4.4
+    },
+    "issues_addressed": 6,
+    "accepted": true,
+    "attempts": 1,
+    "rejection_reasons": []
+  },
+  {
+    "chunk_id": "002",
+    "loop": 1,
+    "before_scores": {
+      "doctrinal_accuracy": 4.0,
+      "terminology_consistency": 3.5,
+      "weighted_score": 3.98
+    },
+    "issues_addressed": 10,
+    "accepted": false,
+    "attempts": 2,
+    "rejection_reasons": [
+      "Glossary regression: 4 approved term(s) were removed or changed",
+      "Glossary regression: 1 approved term(s) were removed or changed"
+    ]
+  },
+  {
+    "chunk_id": "003",
+    "loop": 1,
+    "before_scores": {
+      "doctrinal_accuracy": 4.0,
+      "terminology_consistency": 5.0,
+      "weighted_score": 4.25
+    },
+    "issues_addressed": 10,
+    "accepted": true,
+    "attempts": 1,
+    "rejection_reasons": []
+  }
+]

@@ -1,0 +1,176 @@
+Ő is hosszú ideig a kétségbeesés mélységén állt. Luther foglalkozott vele, amíg végül képes volt elfogadni az evangélium vigasztalását. Johann Gerhardtól, a legnagyobb dogmatikustól is azt olvassuk, hogy már gimnazistaként a legmélyebb félelem és szorongás állapotába került, és több mint egy évig ebben maradt, senki sem tudta megvigasztalni, amíg végül Johann Arnd, a lelki orvosa, meg nem vigasztalta és meg nem gyógyította. De amikor kilépett ebből a gyehennai rémületből, és elismerte magát szegény bűnösnek, akkor naggyá vált. És ha ismernénk az összes nagy teológus történetét, aminek nagy része soha nem került napfényre, és csak az örökkévalóságban derül ki, akkor látnánk, hogy mindezek a nagy emberek először aprókká és semmivé lettek, és csak azután váltak naggyá, amikor kiléptek a félelemből és szorongásból, amikor elkezdték hinni az evangéliumot, és új emberek lettek, akik aztán Isten nagy eszközei lettek, ahogy azt Isten országában látjuk. Szomorú dolog egy fiatalemberrel, aki csupán száraz értelmi meggyőződés révén jutott el a „hithoz" Isten Igéjében. Ha éleselméjű, könnyen veszélybe kerülhet, hogy minden tévedést elfogadjon, és eretnek legyen; mert soha nem került a valódi szívfájdalomba. De aki megtapasztalta a Szó erejét, aki egy igazi, komoly bűnbánaton ment keresztül, az nem fog olyan könnyen követni a szíve mélységeinek veszélyeit, mert felismerte azokat, és nem bízik bennük. Ezért, ha az ő természetes ése elkezd szólani, akkor ő ragaszkodik az Igéhez, és parancsolja neki, hogy hallgasson.
+
+============================================================
+DEBUG — GLOSSARY TERMS INJECTED FOR THIS CHUNK
+============================================================
+Abgrund der Verzweiflung → a kétségbeesés mélysége
+Angst und Noth → félelem és szorongás
+Das Evangelium → az evangélium
+Dein Wort soll mir gewisser sein → Isten igéje legyen nekem bizonyosabb
+Gott nicht → Még Isten sem
+Gottes Wort → Isten Igéje
+Joh. Gerhard → Johann Gerhard
+Klein und Groß → Kicsiny és nagy
+Mensch werden → emberré lés
+Reiche Gottes → Isten országa
+Trost des Evangeliums → az evangélium trópusa
+Untiefen seines Herzens → szíve mélységeinek veszélyei
+Werkzeuge Gottes → Isten eszközei
+Wort Gottes → Isten Igéje
+Wortes Gottes → Isten Igéje
+alle Irrthümer → minden tévedés
+alles, das sie haben → minden, amit birtokolnak
+andere Menschen → új emberek
+aus Glauben in Glauben → hitből hitre
+aus dem Glauben → a hitből
+das Wort → Ige
+durch und mit dem Wort → a szó által és a szóval
+elender Sünder → szegény bűnös
+gegen einander gehalten → egymással szemben tartás
+geistlich aus → lelki értelemben
+im Glauben → hitben
+in Ewigkeit → örökké
+in der Ewigkeit → örökkévalóságban
+klein und nichtig → apró és semmi
+nicht glauben dürfen → nem hihet
+nicht glauben können → hitre képtelen
+nicht glauben können mit nicht glauben dürfen → nem hihetnek és nem hihetnének
+sich sein tröstet → bizalmát helyezi
+trockene Verstandesüberzeugung → száraz értelmi meggyőződés
+wahre Buße → igazi bűnbánat
+wahre, ernste Buße → igazi, komoly bűnbánat
+wahrhaftigen Gott → igazi Isten
+wegen des Glaubens → a hit miatt
+Amen → Ámen
+Gabe → ajándék
+Grund → alap
+Verzweiflung → kétségbeesés
+Verwerfung → elvetés
+Seelen → lelkek
+Segen → áldás
+Luther → Luther
+annehmen → elfogad
+vornehmen → elhatározás
+Bann → kizárás
+Trost → vigasztalás
+Ernst → szentség
+Evangelium → evangélium
+Evangeliums → evangélium
+Dogmatik → dogmatika
+Leben → élet
+Wesen → lényeg
+Haß → gyűlölet
+Schein → látszat
+Scham → bűntudat
+Gymnasiast → gimnazista
+angst → félelem
+Bund → szövetség
+Mund → szó
+Noth → szűkölés
+Koth → szemét
+Dogmen → tanok
+Frommen → Istenfélők
+David → Dávid
+Kain → Káin
+treiben → hajt
+trösten → megvigasztal
+Tröster → Vigasztaló
+geistlich → lelki
+Geistliche → lelki dolgok
+Heiden → népek
+theilen → szétoszt
+Haus → család
+Höllenangst → gyehennai rémület
+Seelenangst → lélekfájdalom
+Erkennen → elismerés
+bekennen → vall
+Elend → nyomor
+Blind → lelki vak
+sünder → bűnösök
+Sünde → bűn
+Warten → várakozás
+Werke → cselekedetek
+geschickt → érdemes
+Gerichte → ítéletek
+Altar → oltár
+Acker → mező
+Theologe → teológus
+Theologie → teológia
+Wüthen → dühöngés
+Liebe → szeretet
+Seele → lélek
+Licht → világosság
+Knecht → szolga
+Gesicht → arc
+Ewigkeit → örökkévalóság
+Seligkeit → üdvösség
+Geben → adományoz
+Lehren → tanítás
+Feuer → tűz
+Henker → börtönőr
+Fleiß → gondosság
+Kern → lényeg
+Tüchtig → alkalmas
+Glauben → hit
+Glaube → hit
+aneignen → birtokba vesz
+erringen → megérdemelni
+Mensch → ember
+Menschen → ember
+Werkzeug → eszköz
+Werkzeuge → Isten eszközei
+Gott → Isten
+Reich → birodalom
+Beichte → bűnvallás
+Durst → lelki szomjúság
+Furcht → félelem
+Drucken → nyomtatás
+Tropen → szóképek
+Verstandesüberzeugung → értelmi meggyőződés
+glaubet → hisz
+glaubt → hisz
+Wort → szó / Isten Igéje [USE CONTEXT]
+Worte → igék
+Gericht → ítélet
+Leuchte → lámpás
+Gefahr → veszély
+Gebühr → megfelelő rész
+einerlei → azonos
+Irrthümer → tévtanok
+Jrrthümer → tévedések
+Ketzern → kétsek
+Kerker → börtön
+Richter → Bíró
+Leuchter → gyertyatartó
+Herzensangst → szívfájdalom
+Weg → Üdvösség útja
+Werk → érdem
+Kraft → erő
+Straft → büntet
+erfahren → megtapasztalás
+Erfahrung → léleki tapasztalat
+Kunst → lelki mesterség
+erlöst → megváltott
+Buße → bűnbánat
+Unfrieden → belső háború
+unirten → uniósok
+Herzens → szív
+Felsen → kőszikla
+tilgen → törlés
+Erwerbe → megszerzés
+verderbe → veszteség
+Treue → hűség
+Zutrauen → bizalom
+Donum → kegyelemi ajándék
+Vernunft → természetes ész
+verwirft → elutasít
+abfallen → elbukik
+absagen → lemondás
+Regen → eső
+reuen → bűnbánat
+Fasten → böjt
+Hirten → pásztor
+genießen → részesül
+Bitten → kérés
+schweigen → hallgatás
+scheiden → szétválaszt

@@ -23,3 +23,13 @@ desktop.ini
 # Temporary files
 *.tmp
 *.bak
+
+# Translation data, outputs, and deliveries (regenerated per run, too large for git)
+pipeline/data/
+translation_deliveries/
+
+# Archived old pipeline (kept locally for reference, not pushed)
+benjamin_archive/
+
+# Log files
+*.log

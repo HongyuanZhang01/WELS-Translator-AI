@@ -38,16 +38,21 @@ MAX_TOKENS = 4096
 # ---------------------------------------------------------------------------
 # LANGUAGE SETTINGS
 # ---------------------------------------------------------------------------
-SOURCE_LANGUAGE = "German"
+# Default source language. Override per-document with --language on the CLI.
+# Current batch (April 2026):
+#   English: Wauwatosa Paper, Otto J Convention Essay
+#   Latin:   Augsburg Confession
+#   German:  Martin Luther's Large Catechism
+SOURCE_LANGUAGE = "English"
 
-# "Resource level" = how much training data AI models have seen in this language.
+# Target languages for the current test batch (Jonathan's April 9 email).
 TARGET_LANGUAGES = {
     "high":   "Spanish",
     "medium": "Hungarian",
     "low":    "Hmong",
 }
 
-DEFAULT_TARGET = "Hungarian"
+DEFAULT_TARGET = "Spanish"
 
 # ---------------------------------------------------------------------------
 # EVALUATION RUBRIC WEIGHTS

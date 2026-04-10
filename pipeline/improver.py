@@ -30,6 +30,9 @@ from anthropic import Anthropic
 
 sys.path.insert(0, os.path.dirname(__file__))
 from config import TRANSLATE_MODEL, MAX_TOKENS, SOURCE_LANGUAGE
+# call_with_retry wraps client.messages.create() with automatic
+# retry-on-transient-failure (500/503/429/network errors).
+from api_retry import call_with_retry
 
 
 def get_client():
@@ -326,7 +329,8 @@ def improve_translation(source_text, translated_text, eval_result,
     user_message = ("\n\n" + "=" * 50 + "\n\n").join(user_parts)
 
     try:
-        response = client.messages.create(
+        response = call_with_retry(
+            client,
             model=TRANSLATE_MODEL,
             max_tokens=MAX_TOKENS,
             system=system,
@@ -450,10 +454,22 @@ def needs_improvement(eval_result, min_doctrinal=5, min_terminology=5):
 
     Returns True if doctrinal_accuracy or terminology_consistency
     is below the minimum threshold.
+
+    If the evaluation itself errored (e.g., rubric JSON unparseable
+    even after in-pass recovery AND Pass-B fallback), returns True
+    to force an improvement attempt rather than silently treating a
+    failed eval as a pass. The alternative — returning False — caused
+    Hungarian chunk 4 in the 2026-04-09 wauwatosa run to be reported
+    as "TARGET MET" with 0/0/0 scores. Forcing improvement means the
+    worst case is we waste one improvement cycle; the best case is
+    we rescue a translation that would otherwise have silently
+    received a fake pass.
     """
     rubric = eval_result.get("rubric_evaluation", {})
     if "error" in rubric:
-        return False  # Can't improve if eval failed
+        print("  [WARNING] Rubric evaluation errored — forcing improvement attempt "
+              "rather than treating failed eval as TARGET MET.")
+        return True  # force improvement when we cannot trust the eval
 
     da = rubric.get("doctrinal_accuracy", {}).get("score", 0)
     tc = rubric.get("terminology_consistency", {}).get("score", 0)

@@ -40,6 +40,10 @@ from config import (
     EVAL_WEIGHTS,
     SOURCE_LANGUAGE,
 )
+# call_with_retry wraps client.messages.create() with automatic
+# retry-on-transient-failure (500/503/429/network errors). Without it a
+# single API blip crashes the whole run and we lose progress.
+from api_retry import call_with_retry
 
 
 def get_client():
@@ -68,11 +72,64 @@ def _parse_json_response(text):
     if text.startswith("json"):
         text = text[4:].strip()
 
+    # Capture diagnostic info about the FIRST JSONDecodeError we hit so
+    # we can tell the recovery prompt exactly what went wrong in the
+    # original output and which part of the text broke the parser. We
+    # capture at the FIRST json.loads attempt (after markdown stripping)
+    # because that attempt sees the model's unmodified response — later
+    # cleanup attempts operate on mangled copies and their errors are
+    # less actionable for guiding the model to fix its mistake.
+    #
+    # Defensive handling: we do NOT assume the exception has .msg /
+    # .lineno / .colno / .pos attributes, and we do NOT assume str(e)
+    # returns a non-empty string. Older or subclassed JSONDecodeError
+    # instances have been seen with degenerate fields in the wild.
+    first_error = None
+
     # Try standard parse first
     try:
         return json.loads(text)
-    except json.JSONDecodeError:
-        pass
+    except json.JSONDecodeError as e:
+        # Prefer Python's canonical str(e) ("msg: line X column Y (char Z)").
+        # Fall back to reconstructing from individual attributes. Last
+        # resort is a generic marker so the recovery path still has
+        # something to show the model.
+        canonical = str(e)
+        msg_attr = getattr(e, "msg", None)
+        lineno = getattr(e, "lineno", None)
+        colno = getattr(e, "colno", None)
+        pos = getattr(e, "pos", None)
+
+        if canonical:
+            first_error = canonical
+        elif msg_attr:
+            parts = [str(msg_attr)]
+            if lineno is not None and colno is not None:
+                parts.append(f"at line {lineno} column {colno}")
+            if pos is not None:
+                parts.append(f"(char {pos})")
+            first_error = " ".join(parts)
+        else:
+            first_error = "JSONDecodeError with no diagnostic info available"
+
+        # Enrich with a short snippet of the actual text around the
+        # failure position. Seeing the literal offending characters is
+        # far more useful to the recovery model than "line 15 column 12"
+        # in the abstract. We escape newlines/tabs so the snippet is
+        # printable on a single line inside the recovery prompt.
+        if isinstance(pos, int) and 0 <= pos <= len(text):
+            snippet_start = max(0, pos - 30)
+            snippet_end = min(len(text), pos + 30)
+            snippet = text[snippet_start:snippet_end]
+            snippet_safe = (
+                snippet.replace("\\", "\\\\")
+                       .replace("\n", "\\n")
+                       .replace("\r", "\\r")
+                       .replace("\t", "\\t")
+            )
+            first_error += (
+                f"  [literal text around char {pos}: {snippet_safe!r}]"
+            )
 
     # Remove control characters that break JSON (but keep newlines in strings)
     cleaned = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', text)
@@ -167,7 +224,11 @@ def _parse_json_response(text):
             except json.JSONDecodeError:
                 pass
 
-    return {"error": "Failed to parse JSON after all attempts", "raw_response": text[:2000]}
+    return {
+        "error": "Failed to parse JSON after all attempts",
+        "raw_response": text[:2000],
+        "parse_error": first_error or "unknown (no JSONDecodeError captured)",
+    }
 
 
 def _extract_scores_from_raw(text):
@@ -385,7 +446,8 @@ The following are the approved translations for key theological terms.
 Check whether the translation uses these consistently:
 {glossary_text}"""
 
-    response = client.messages.create(
+    response = call_with_retry(
+        client,
         model=EVAL_MODEL,
         max_tokens=MAX_TOKENS,
         system=_build_rubric_prompt(variant),
@@ -399,39 +461,99 @@ Check whether the translation uses these consistently:
     # This handles ANY malformed response — truncation, weird chars,
     # markdown wrapping, anything we haven't seen yet.
     if "error" in parsed:
+        # Grab the specific JSON parse error so we can tell the recovery
+        # model exactly what went wrong. If we don't know, fall back to
+        # a generic message so the recovery prompt still makes sense.
+        specific_error = parsed.get(
+            "parse_error", "unknown JSON parse error"
+        )
         print("    [JSON recovery] Parse failed, asking AI to re-extract...")
+        print(f"    [JSON recovery] Specific parse error: {specific_error}")
 
         # First, pull the scores from the raw text with regex so we can
         # verify the AI doesn't change them during reformatting
         raw_scores = _extract_scores_from_raw(response_text)
 
-        recovery = client.messages.create(
+        recovery = call_with_retry(
+            client,
             model=EVAL_MODEL,
             max_tokens=MAX_TOKENS,
             system=(
                 "CONTEXT: You are a JSON recovery tool inside Step 5 (Evaluation) "
                 "of a WELS Lutheran translation pipeline. A previous AI evaluator "
                 "produced a rubric evaluation but the response was not valid JSON. "
-                "Your ONLY job is to reformat the existing evaluation as clean JSON.\n\n"
-                "CRITICAL RULES:\n"
+                "Your ONLY job is to reformat the existing evaluation as clean "
+                "JSON, taking care to AVOID the specific mistake that broke the "
+                "original output.\n\n"
+                f"SPECIFIC PARSE ERROR ON THE ORIGINAL OUTPUT:\n{specific_error}\n\n"
+                "HOW TO USE THIS ERROR INFORMATION — MANDATORY REASONING STEP:\n"
+                "Do NOT jump straight to producing JSON. Before writing a single "
+                "character of your corrected output, you must perform and briefly "
+                "think through the following three-step reasoning in your head:\n"
+                "\n"
+                "  STEP 1 — DIAGNOSE. Read the parse error above and the literal "
+                "text snippet it refers to (if one is given in square brackets). "
+                "What exactly did the previous attempt do wrong? Identify the "
+                "concrete mistake: did it forget a comma between two fields, "
+                "leave a string unterminated, use a special character that wasn't "
+                "escaped, truncate mid-value, emit a trailing comma, use single "
+                "quotes instead of double quotes, wrap the JSON in a markdown "
+                "code fence, include a // or /* */ comment, include a literal "
+                "newline inside a string without escaping it, etc.? Name the "
+                "specific mistake.\n"
+                "\n"
+                "  STEP 2 — PLAN PREVENTION. Given the specific mistake from "
+                "Step 1, what concrete rule must you follow in your output to "
+                "prevent that exact failure mode from recurring? Be specific. "
+                "'I will be more careful' is NOT acceptable. 'I will place a "
+                "comma between every key-value pair except the last one in each "
+                "object' IS acceptable. 'I will escape every internal double "
+                "quote as \\\" inside string values' IS acceptable.\n"
+                "\n"
+                "  STEP 3 — EXECUTE. Now, holding your prevention rule from "
+                "Step 2 firmly in mind, write the corrected JSON output.\n"
+                "\n"
+                "If the parse error says 'unknown' or is otherwise unhelpful, "
+                "default to the MAXIMALLY defensive output: escape every "
+                "internal double quote as \\\", keep every string on a single "
+                "line with no literal newlines (escape them as \\n), put a comma "
+                "after every key-value pair and every array element except the "
+                "last one in its container, use only double quotes for both keys "
+                "and string values, and do not wrap the output in markdown fences.\n"
+                "\n"
+                "CRITICAL RULES FOR THE CONTENT:\n"
                 "- You are NOT an evaluator. Do NOT re-evaluate anything.\n"
                 "- Copy every score EXACTLY as the number that appears in the text.\n"
                 "- Copy every explanation as-is. Do not reword, shorten, or expand.\n"
                 "- Copy every critical_error and suggestion verbatim.\n"
                 "- If a score says 3, output 3. If it says 4, output 4. No changes.\n"
-                "- Output ONLY the JSON object. No markdown, no commentary."
+                "- Output ONLY the JSON object. No markdown, no commentary, no "
+                "explanation of your reasoning steps — keep the reasoning internal."
             ),
             messages=[
                 {"role": "user", "content": user_message},
                 {"role": "assistant", "content": response_text},
                 {"role": "user", "content": (
-                    "Your evaluation response above could not be parsed as JSON. "
-                    "Please reformat it as a clean JSON object. COPY every value "
-                    "exactly as it appeared — same scores, same explanations, same "
-                    "errors, same suggestions. Do not re-evaluate or adjust anything. "
-                    "Output ONLY the JSON with keys: doctrinal_accuracy, "
-                    "terminology_consistency, clarity, naturalness (each with score "
-                    "and explanation), critical_errors (array), suggestions (array)."
+                    "Your evaluation response above could not be parsed as JSON.\n"
+                    f"The specific parse error was:\n{specific_error}\n\n"
+                    "Before you write your corrected output, internally work "
+                    "through the three-step reasoning described in the system "
+                    "prompt:\n"
+                    "  (1) DIAGNOSE exactly what mistake broke the previous "
+                    "output,\n"
+                    "  (2) PLAN a concrete prevention rule that addresses that "
+                    "specific mistake,\n"
+                    "  (3) EXECUTE the corrected JSON while holding that rule in "
+                    "mind.\n\n"
+                    "Then output ONLY the corrected JSON — no reasoning visible, "
+                    "no markdown fences, no commentary. COPY every value exactly "
+                    "as it appeared in the original output — same scores, same "
+                    "explanations, same critical_errors, same suggestions. Do NOT "
+                    "re-evaluate or adjust anything. The JSON must have keys: "
+                    "doctrinal_accuracy, terminology_consistency, clarity, "
+                    "naturalness (each with 'score' and 'explanation'), "
+                    "critical_errors (array of strings), suggestions (array of "
+                    "strings)."
                 )},
             ],
         )
@@ -463,15 +585,60 @@ def evaluate_with_rubric(source_text, translated_text, target_language, glossary
     print("    [Rubric pass A]...")
     pass_a = _run_single_rubric(client, source_text, translated_text,
                                 target_language, glossary, "A")
-    if "error" in pass_a:
-        return pass_a
+    pass_a_failed = "error" in pass_a
+    if pass_a_failed:
+        print("    [Pass A FAILED to parse — will try Pass B as independent fallback]")
 
-    # Pass B
+    # Pass B — run it even when Pass A failed, because Pass B is an
+    # independent API call with a different prompt variant and has its
+    # own chance of producing valid JSON. This avoids the old bug where
+    # a single bad JSON response on Pass A would silently produce a
+    # "TARGET MET — 0/0/0" result with no attempt at recovery beyond
+    # the single in-pass retry.
     print("    [Rubric pass B]...")
     pass_b = _run_single_rubric(client, source_text, translated_text,
                                 target_language, glossary, "B")
-    if "error" in pass_b:
-        return pass_b
+    pass_b_failed = "error" in pass_b
+
+    if pass_a_failed and pass_b_failed:
+        # Both passes failed even after in-pass recovery attempts. Return
+        # the error dict upstream. needs_improvement() will now see the
+        # error and force an improvement attempt rather than declaring
+        # TARGET MET on phantom zero scores.
+        #
+        # Attach a prominent human-review marker to the returned error
+        # dict. full_evaluation() will lift this to the top level of
+        # the eval_result so it propagates into evaluations_*.json and
+        # the end-of-run summary, making flagged chunks trivially
+        # greppable for human reviewers.
+        print()
+        print("    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        print("    !!! HUMAN REVIEW REQUIRED                               !!!")
+        print("    !!! Both rubric passes failed to parse as JSON, even    !!!")
+        print("    !!! after in-pass recovery attempts. This chunk cannot  !!!")
+        print("    !!! be trusted to reflect real translation quality.    !!!")
+        print("    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        print()
+        pass_a["needs_human_review"] = True
+        pass_a["review_reason"] = (
+            "Both dual-pass rubric evaluations failed to produce valid JSON "
+            "even after per-pass recovery attempts. Any scores or feedback "
+            "attached to this chunk should be treated as untrusted. A human "
+            "reviewer should re-evaluate this translation manually."
+        )
+        pass_a["failed_passes"] = ["A", "B"]
+        return pass_a  # error dict now carries the human-review marker
+
+    if pass_a_failed:
+        # Only Pass B succeeded. Collapse to single-pass mode by treating
+        # Pass B's scores as both A and B — this keeps the reconciliation
+        # code path identical, it just sees the same scores twice and
+        # the median / agreement checks still work correctly.
+        print("    [Using Pass B only — single-pass fallback]")
+        pass_a = pass_b
+    elif pass_b_failed:
+        print("    [Using Pass A only — single-pass fallback]")
+        pass_b = pass_a
 
     # Check consistency
     disagreements = []
@@ -564,7 +731,8 @@ def back_translate(translated_text, source_language, target_language):
     """
     client = get_client()
 
-    response = client.messages.create(
+    response = call_with_retry(
+        client,
         model=BACK_TRANSLATE_MODEL,
         max_tokens=MAX_TOKENS,
         system=f"""PIPELINE CONTEXT: You are Step 5b in a WELS Lutheran translation pipeline.
@@ -606,7 +774,8 @@ def compare_with_original(original_text, back_translated_text, source_language):
     """
     client = get_client()
 
-    response = client.messages.create(
+    response = call_with_retry(
+        client,
         model=EVAL_MODEL,
         max_tokens=MAX_TOKENS,
         system=f"""PIPELINE CONTEXT: You are part of Step 5 (Evaluation) in a WELS
@@ -672,7 +841,8 @@ Respond with valid JSON only (no markdown, no code blocks):
     # Same recovery pattern: if parsing fails, ask AI to reformat
     if "error" in parsed:
         print("    [JSON recovery] Comparison parse failed, asking AI to re-extract...")
-        recovery = client.messages.create(
+        recovery = call_with_retry(
+            client,
             model=EVAL_MODEL,
             max_tokens=MAX_TOKENS,
             system=(
@@ -756,5 +926,18 @@ def full_evaluation(source_text, translated_text, target_language,
             "comparison": comparison,
         },
     }
+
+    # Propagate the human-review flag from the rubric error dict to the
+    # top level of the result so downstream code (run_eval.py summary,
+    # evaluations_*.json greps, etc.) can find it without having to
+    # reach into result["rubric_evaluation"]. The flag is attached by
+    # evaluate_with_rubric() when both dual-pass attempts fail.
+    if isinstance(rubric_result, dict) and rubric_result.get("needs_human_review"):
+        result["needs_human_review"] = True
+        result["review_reason"] = rubric_result.get(
+            "review_reason",
+            "Rubric evaluation errored — human review required.",
+        )
+        result["failed_passes"] = rubric_result.get("failed_passes", [])
 
     return result

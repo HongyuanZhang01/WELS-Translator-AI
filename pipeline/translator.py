@@ -113,7 +113,7 @@ commentary. Just the translation."""
 
 def translate_chunk(chunk, target_language, glossary=None,
                     source_language=None, document_context=None,
-                    quote_instructions=None):
+                    quote_instructions=None, previous_translation=None):
     """
     Translates a single chunk with full context.
 
@@ -126,6 +126,10 @@ def translate_chunk(chunk, target_language, glossary=None,
         document_context (str): Description of the document and section
         quote_instructions (str): Bible verse translations and quote handling
                                   instructions from quote_handler.py
+        previous_translation (str): The translated text from the PREVIOUS chunk.
+                                    Used to maintain terminology consistency
+                                    across chunks (e.g., always using "Cikkely"
+                                    for "Article" instead of sometimes "Cikk").
 
     Returns:
         dict: {
@@ -158,6 +162,28 @@ def translate_chunk(chunk, target_language, glossary=None,
     # Add quote instructions if available (Bible verses, patristic quotes, etc.)
     if quote_instructions:
         user_parts.append(quote_instructions)
+
+    # CONSISTENCY ANCHOR: show the translator what it produced for the
+    # previous chunk so it maintains the same terminology, style, and
+    # formatting conventions (e.g., "Cikkely" not "Cikk", consistent
+    # numbering formats, same register).  We include the tail end of the
+    # previous translation — enough for the model to pick up patterns
+    # without bloating the prompt.
+    if previous_translation:
+        # Take the last ~500 chars (roughly the last paragraph or two)
+        tail = previous_translation[-500:] if len(previous_translation) > 500 else previous_translation
+        # If we sliced mid-sentence, skip to the first sentence boundary
+        if len(previous_translation) > 500:
+            first_period = tail.find('. ')
+            if first_period != -1 and first_period < 100:
+                tail = tail[first_period + 2:]
+            tail = "..." + tail
+        user_parts.append(
+            f"YOUR PREVIOUS TRANSLATION (the chunk you just translated — "
+            f"maintain the SAME terminology, style, and formatting conventions "
+            f"you used here. If you used a specific word for a concept, keep "
+            f"using that same word. Do NOT translate this section again):\n{tail}"
+        )
 
     # Add surrounding context if available
     context_before = chunk.get("context_before", "")
@@ -228,6 +254,11 @@ def translate_chunks(chunks, target_language, glossary_path=None,
     lang = source_language or SOURCE_LANGUAGE
     results = []
 
+    # Track the previous chunk's translation for consistency anchoring.
+    # Benjamin noted that without this, chunks independently choose
+    # different terms for the same concept (e.g., "Cikk" vs "Cikkely").
+    previous_translation = None
+
     for i, chunk in enumerate(chunks):
         print(f"\n=== Translating chunk {chunk.get('chunk_id', i+1)} ({i+1}/{len(chunks)}) ===")
         article = chunk.get("article", "")
@@ -259,7 +290,9 @@ def translate_chunks(chunks, target_language, glossary_path=None,
             if quote_data.get("other_quotes"):
                 print(f"  Other quotes found: {len(quote_data['other_quotes'])}")
 
-        # Step 4: Translate with full context
+        # Step 4: Translate with full context + previous translation for consistency
+        if previous_translation:
+            print(f"  Consistency anchor: passing {min(500, len(previous_translation))} chars from previous chunk")
         print(f"  Translating {lang} -> {target_language}...")
         result = translate_chunk(
             chunk=chunk,
@@ -268,8 +301,12 @@ def translate_chunks(chunks, target_language, glossary_path=None,
             source_language=lang,
             document_context=document_context,
             quote_instructions=quote_instructions,
+            previous_translation=previous_translation,
         )
         results.append(result)
+
+        # Update the consistency anchor for the next chunk
+        previous_translation = result["translated_text"]
 
         print(f"  Done: {len(result['translated_text'])} chars")
 

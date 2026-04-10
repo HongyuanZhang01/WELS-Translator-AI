@@ -67,6 +67,11 @@ def detect_articles(text):
         r'(?m)^(Thesis\s+[IVXLCDM\d]+\.?\s*.*)$',
         # "Chapter 1" or "Part One"
         r'(?m)^((?:Chapter|Part|Section)\s+[\w\d]+[.:,]?\s*.*)$',
+        # German catechism headers: "DAS ERSTE GEBOT", "DER ZWEITE ARTIKEL",
+        # "DIE ERSTE BITTE", "EINE CHRISTLICHE ... VORREDE", etc.
+        r'(?m)^((?:DAS|DER|DIE|EINE|VON)\s+[A-ZÄÖÜ].{3,60})$',
+        # German part headers: "Der erste Teil", "Der zweite Teil", "Der dritte Teil"
+        r'(?m)^(Der\s+(?:erste|zweite|dritte|vierte|fünfte)\s+Teil)$',
         # Generic numbered headers like "I. Of God"
         r'(?m)^([IVXLCDM]+\.\s+[A-Z].+?)$',
     ]

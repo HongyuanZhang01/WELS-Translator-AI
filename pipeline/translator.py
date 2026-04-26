@@ -234,7 +234,7 @@ def translate_chunk(chunk, target_language, glossary=None,
 
 def translate_chunks(chunks, target_language, glossary_path=None,
                      source_language=None, document_context=None,
-                     handle_quotes=True):
+                     handle_quotes=True, checkpoint_path=None):
     """
     Translates a list of chunks, building/using the glossary along the way.
 
@@ -245,6 +245,11 @@ def translate_chunks(chunks, target_language, glossary_path=None,
         source_language (str): Source language override
         document_context (str): Description of the document
         handle_quotes (bool): Whether to detect and resolve Bible/other quotes
+        checkpoint_path (str): If given, write the growing results list to
+            this path after every chunk completes. Writes are atomic
+            (tmp file + rename) so a crash never leaves a half-written JSON
+            on disk. This turns "one bad chunk destroys 6 minutes of work"
+            into "one bad chunk costs one chunk's worth of API calls."
 
     Returns:
         list: List of translation result dicts
@@ -283,6 +288,7 @@ def translate_chunks(chunks, target_language, glossary_path=None,
             quote_data = process_quotes_for_chunk(
                 chunk["text"], target_language, lang,
                 use_ai_detection=True,
+                chunk_id=chunk.get("chunk_id", i + 1),
             )
             quote_instructions = quote_data.get("quote_instructions", "")
             if quote_data.get("bible_verses"):
@@ -309,6 +315,24 @@ def translate_chunks(chunks, target_language, glossary_path=None,
         previous_translation = result["translated_text"]
 
         print(f"  Done: {len(result['translated_text'])} chars")
+
+        # Incremental checkpoint: after each successful chunk, rewrite the
+        # growing results list to disk so a later crash doesn't erase the
+        # work we've already paid the API for. Atomic via tmp+rename, so
+        # the target file is never half-written — readers either see the
+        # previous valid snapshot or the new one, never garbage in between.
+        if checkpoint_path:
+            try:
+                tmp_path = checkpoint_path + ".tmp"
+                os.makedirs(os.path.dirname(checkpoint_path) or ".", exist_ok=True)
+                with open(tmp_path, "w", encoding="utf-8") as f:
+                    json.dump(results, f, indent=2, ensure_ascii=False)
+                os.replace(tmp_path, checkpoint_path)
+            except Exception as ckpt_err:
+                # Checkpointing must never take down the run itself — worst
+                # case we lose the checkpoint, not the in-memory results.
+                print(f"  WARNING: checkpoint write failed ({type(ckpt_err).__name__}): "
+                      f"{ckpt_err} — continuing without checkpoint")
 
     return results
 

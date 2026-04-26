@@ -48,6 +48,52 @@ def get_client():
 
 
 # =========================================================================
+# HUMAN REVIEW QUEUE — for Bible lookups the API refused to resolve
+# =========================================================================
+#
+# When the Anthropic API returns a 4xx/5xx on a Bible verse lookup (e.g.
+# a content-filter false positive on a Communion or covenant verse, a
+# transient server error, or a rate limit), we can't crash the whole run
+# over one bad lookup. Instead, we record the references and the error
+# so a human translator/reviewer can verify the AI's inline rendering of
+# those verses against the canonical target-language Bible after the run.
+#
+# The translator still produces output — it just doesn't get a pre-resolved
+# canonical verse text for those specific references, so the model falls
+# back on its own knowledge. That's why these entries need human review.
+
+BIBLE_LOOKUP_FAILURES = []
+
+
+def get_bible_lookup_failures():
+    """Return a copy of the current human-review queue (list of dicts)."""
+    return list(BIBLE_LOOKUP_FAILURES)
+
+
+def clear_bible_lookup_failures():
+    """Reset the human-review queue. Call at the start of each run."""
+    BIBLE_LOOKUP_FAILURES.clear()
+
+
+def _record_bible_lookup_failure(chunk_id, references, target_language,
+                                 error_type, error_message):
+    """Append a failure record for later human review."""
+    BIBLE_LOOKUP_FAILURES.append({
+        "chunk_id": chunk_id,
+        "target_language": target_language,
+        "references": list(references),
+        "error_type": error_type,
+        "error_message": error_message,
+        "reason": (
+            "The Anthropic API refused to return canonical Bible text for "
+            "these references. The translator produced its own rendering "
+            "inline — a human must verify it against the standard published "
+            f"{target_language} Bible before delivery."
+        ),
+    })
+
+
+# =========================================================================
 # BIBLE REFERENCE DETECTION
 # =========================================================================
 
@@ -290,7 +336,7 @@ Respond with valid JSON only (no markdown, no code blocks):
 }}"""
 
 
-def lookup_bible_verses(references, target_language):
+def lookup_bible_verses(references, target_language, chunk_id=None):
     """
     Looks up Bible verses in the standard published Bible translation
     for the target language.
@@ -298,9 +344,16 @@ def lookup_bible_verses(references, target_language):
     Parameters:
         references (list): List of standardized references (e.g., ["Romans 3:28", "John 14:6"])
         target_language (str): The target language
+        chunk_id: Optional chunk identifier, recorded if the lookup fails
+                  so a human reviewer can find the right chunk to check.
 
     Returns:
         dict: {reference: {"text": verse_text, "confidence": level, "bible": bible_name}}
+
+        On any API error (content-filter block, rate limit, server error,
+        network failure) this returns an EMPTY DICT and records the failure
+        in the module-level BIBLE_LOOKUP_FAILURES queue for human review
+        instead of raising. This keeps one bad lookup from killing the run.
     """
     if not references:
         return {}
@@ -310,18 +363,39 @@ def lookup_bible_verses(references, target_language):
 
     refs_text = "\n".join(f"- {ref}" for ref in references)
 
-    response = client.messages.create(
-        model=EVAL_MODEL,
-        max_tokens=MAX_TOKENS,
-        system=BIBLE_LOOKUP_PROMPT.format(
-            bible_name=bible_name,
+    try:
+        response = client.messages.create(
+            model=EVAL_MODEL,
+            max_tokens=MAX_TOKENS,
+            system=BIBLE_LOOKUP_PROMPT.format(
+                bible_name=bible_name,
+                target_language=target_language,
+            ),
+            messages=[{
+                "role": "user",
+                "content": f"Provide the exact {target_language} text from the {bible_name} for these verses:\n\n{refs_text}"
+            }],
+        )
+    except Exception as api_err:
+        # The Anthropic SDK raises anthropic.BadRequestError,
+        # anthropic.APIError, anthropic.RateLimitError, etc. We catch them
+        # all with Exception on purpose — any failure here must NOT crash
+        # a multi-chunk translation run. Record it and let the translator
+        # produce its own rendering inline (flagged for human review).
+        err_type = type(api_err).__name__
+        err_msg = str(api_err)
+        print(f"  WARNING: Bible lookup failed ({err_type}): {err_msg[:200]}")
+        print(f"  -> Falling back: translator will render these verses "
+              f"inline using its own knowledge, and the references have "
+              f"been added to the human-review queue.")
+        _record_bible_lookup_failure(
+            chunk_id=chunk_id,
+            references=references,
             target_language=target_language,
-        ),
-        messages=[{
-            "role": "user",
-            "content": f"Provide the exact {target_language} text from the {bible_name} for these verses:\n\n{refs_text}"
-        }],
-    )
+            error_type=err_type,
+            error_message=err_msg,
+        )
+        return {}
 
     response_text = response.content[0].text.strip()
     if response_text.startswith("```"):
@@ -342,7 +416,15 @@ def lookup_bible_verses(references, target_language):
             }
         return verses
     except json.JSONDecodeError:
-        print(f"  WARNING: Failed to parse Bible lookup response")
+        print(f"  WARNING: Failed to parse Bible lookup response — "
+              f"logging for human review and continuing")
+        _record_bible_lookup_failure(
+            chunk_id=chunk_id,
+            references=references,
+            target_language=target_language,
+            error_type="JSONDecodeError",
+            error_message="Response from Bible lookup was not valid JSON",
+        )
         return {}
 
 
@@ -351,7 +433,7 @@ def lookup_bible_verses(references, target_language):
 # =========================================================================
 
 def process_quotes_for_chunk(chunk_text, target_language, source_language=None,
-                              use_ai_detection=True):
+                              use_ai_detection=True, chunk_id=None):
     """
     The main function for quote handling. For a given chunk:
     1. Detect Bible references (regex + optionally AI)
@@ -403,7 +485,7 @@ def process_quotes_for_chunk(chunk_text, target_language, source_language=None,
     bible_verses = {}
     if bible_refs:
         print(f"  Looking up {len(bible_refs)} verses in {target_language} Bible...")
-        bible_verses = lookup_bible_verses(bible_refs, target_language)
+        bible_verses = lookup_bible_verses(bible_refs, target_language, chunk_id=chunk_id)
         confident = sum(1 for v in bible_verses.values() if v["confidence"] == "certain")
         print(f"  Found {len(bible_verses)} verses ({confident} high-confidence)")
 

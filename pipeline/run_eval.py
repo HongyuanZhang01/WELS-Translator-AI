@@ -52,6 +52,22 @@ import glob
 import argparse
 from datetime import datetime, timedelta
 
+# UNICODE FIX (April 2026): On Windows, Python's stdout defaults to cp1252,
+# which cannot encode characters outside Western European (e.g. Hungarian 'ő'
+# U+0151, 'ű' U+0171). When the eval loop printed a parse-error message that
+# happened to contain one of those characters, the whole subprocess crashed
+# with UnicodeEncodeError and the eval results for that run were lost.
+# Reconfiguring stdout to UTF-8 with errors='replace' makes printing any
+# Unicode character safe: worst case, an un-displayable character shows as
+# '?' in the terminal, but the process never crashes and file output (which
+# already uses explicit encoding="utf-8") is unaffected.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except AttributeError:
+    # Python < 3.7 doesn't have reconfigure; we require 3.7+ anyway.
+    pass
+
 sys.path.insert(0, os.path.dirname(__file__))
 
 from eval.evaluator import full_evaluation

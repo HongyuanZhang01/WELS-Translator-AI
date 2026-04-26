@@ -233,6 +233,51 @@ def load_json(path, description):
         )
 
 
+def load_bible_lookup_review(job_folder):
+    """Load a bible_lookup_review_*.json file from the job folder, if one
+    exists.
+
+    These files are produced by run_pipeline.py's quote_handler when the
+    Anthropic API's content filter refuses to return canonical Bible verse
+    text for a reference. The translator writes its own inline rendering
+    of the verse, but the failure gets recorded in this sidecar file so a
+    human can manually verify the rendering against the published
+    target-language Bible before delivery.
+
+    Returns:
+        None if no file is present.
+        A dict {"data": <parsed json>, "source_file": <basename>} if a file
+        was found and parsed successfully.
+
+    If multiple bible_lookup_review files exist in the folder (e.g. from
+    several runs), the NEWEST one by modification time is used. This is
+    intentionally lenient — unlike eval/translation files, the bible-review
+    file is additive metadata and a stale copy from a prior run shouldn't
+    block packaging. We log the choice so it's never silent.
+    """
+    matches = sorted(
+        glob.glob(os.path.join(job_folder, "bible_lookup_review_*.json")),
+        key=lambda p: os.path.getmtime(p),
+    )
+    if not matches:
+        return None
+    newest = matches[-1]
+    if len(matches) > 1:
+        print(
+            f"  NOTE: found {len(matches)} bible_lookup_review_*.json files; "
+            f"using newest: {os.path.basename(newest)}"
+        )
+    try:
+        with open(newest, "r", encoding="utf-8") as f:
+            return {"data": json.load(f), "source_file": os.path.basename(newest)}
+    except (json.JSONDecodeError, OSError) as e:
+        print(
+            f"  WARNING: could not read {os.path.basename(newest)}: {e}\n"
+            f"  Proceeding without Bible verse review file."
+        )
+        return None
+
+
 # =====================================================================
 # RUBRIC ACCESS (brittle-safe)
 # =====================================================================
@@ -416,6 +461,95 @@ def write_review_list(output_path, job_name, target_language, rows, generated_at
             f.write("-" * 72 + "\n\n")
 
 
+def write_bible_verse_review_file(output_path, job_name, target_language,
+                                  bible_review, rows, generated_at):
+    """Build a plain-text file listing the Bible verse references the
+    Anthropic API's content filter refused to return during translation.
+
+    The translator still produced an inline rendering of each verse so the
+    chunk could be translated — but a human reviewer needs to compare that
+    inline rendering against the canonical published target-language Bible
+    before the translation can be delivered.
+
+    The `bible_review` argument is the dict returned by
+    load_bible_lookup_review(). This function should only be called when
+    that returns non-None.
+
+    `rows` is the list of row dicts produced by build_rows(); we use it to
+    pull out the source_text and translated_text for any chunk that had a
+    Bible lookup failure, so reviewers have context without flipping back
+    and forth between files.
+    """
+    data = bible_review["data"]
+    failures = data.get("failures") or []
+    rows_by_id = {r["chunk_id"]: r for r in rows}
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write("=" * 72 + "\n")
+        f.write(f"{job_name.upper()} — Bible verses needing human verification\n")
+        f.write(f"Target language: {target_language}\n")
+        f.write(f"Total failures: {len(failures)}\n")
+        f.write(f"Source review file: {bible_review['source_file']}\n")
+        f.write(f"Generated: {generated_at}\n")
+        f.write("=" * 72 + "\n\n")
+
+        f.write("WHAT THIS FILE IS\n")
+        f.write("-" * 72 + "\n")
+        f.write(
+            "During translation, the AI tried to look up the canonical text\n"
+            "of each Bible verse quoted in the source document so it could\n"
+            "drop in the official published translation. For the references\n"
+            "listed below, the lookup failed (the API's content filter\n"
+            "refused to return the verse text). The translator fell back to\n"
+            "producing its OWN rendering of the verse inside the translated\n"
+            "chunk.\n\n"
+            "A human reviewer must open the published target-language Bible,\n"
+            "find each reference below, and compare it against the verse\n"
+            "text that appears in the corresponding chunk of the delivered\n"
+            "translation. If the translator's rendering is wrong, replace it\n"
+            "with the published text before sending the translation out.\n\n"
+        )
+
+        if not failures:
+            f.write("No Bible lookup failures recorded. Nothing to review here.\n")
+            return
+
+        for i, failure in enumerate(failures, start=1):
+            chunk_id = failure.get("chunk_id", "?")
+            references = failure.get("references") or failure.get("reference") or []
+            if isinstance(references, str):
+                references = [references]
+            reason = failure.get("reason") or failure.get("error") or ""
+
+            f.write("=" * 72 + "\n")
+            f.write(f"FAILURE {i} of {len(failures)} — CHUNK {chunk_id}\n")
+            f.write("=" * 72 + "\n\n")
+
+            if references:
+                f.write("References to verify:\n")
+                for ref in references:
+                    f.write(f"  - {ref}\n")
+                f.write("\n")
+
+            if reason:
+                f.write(f"API reason: {reason}\n\n")
+
+            row = rows_by_id.get(chunk_id)
+            if row:
+                if row.get("article"):
+                    f.write(f"Article: {row['article']}\n\n")
+                f.write("Source text (contains the verse reference):\n")
+                f.write(row["source_text"].strip() + "\n\n")
+                f.write("Translator's rendering (verify against published Bible):\n")
+                f.write(row["translated_text"].strip() + "\n\n")
+            else:
+                f.write(
+                    f"(Could not find chunk {chunk_id} in the evaluated\n"
+                    f"translations file — review the verse references manually.)\n\n"
+                )
+            f.write("-" * 72 + "\n\n")
+
+
 def write_excel_summary(output_path, job_name, target_language, source_language,
                         rows, generated_at):
     """Build the Excel summary file. Returns True on success, or prints a
@@ -559,6 +693,13 @@ def package_job(job_name, job_folder, output_parent, make_excel):
     print(f"  evaluations:            {os.path.basename(eval_path)}")
     print(f"  evaluated_translations: {os.path.basename(etrans_path)}")
 
+    # Optional: Bible-verse review sidecar. Not required for packaging.
+    bible_review = load_bible_lookup_review(job_folder)
+    if bible_review:
+        n_failures = len(bible_review["data"].get("failures") or [])
+        print(f"  bible_lookup_review:    {bible_review['source_file']} "
+              f"({n_failures} failure(s))")
+
     evaluations = load_json(eval_path, "evaluations file")
     etrans = load_json(etrans_path, "evaluated_translations file")
     if not isinstance(evaluations, list) or not isinstance(etrans, list):
@@ -610,6 +751,19 @@ def package_job(job_name, job_folder, output_parent, make_excel):
     write_review_list(review_path, job_name, target_language, rows, generated_at)
     print(f"  wrote {os.path.basename(review_path)}")
 
+    # 3b. Bible verse review sidecar — only written if the pipeline
+    # recorded any content-filter failures during translation.
+    bible_review_path = None
+    if bible_review:
+        bible_review_path = os.path.join(
+            delivery_folder, f"{job_name}_bible_verses_needing_verification.txt"
+        )
+        write_bible_verse_review_file(
+            bible_review_path, job_name, target_language,
+            bible_review, rows, generated_at,
+        )
+        print(f"  wrote {os.path.basename(bible_review_path)}")
+
     # 4. Excel summary
     if make_excel:
         xlsx_path = os.path.join(delivery_folder, f"{job_name}_evaluation_summary.xlsx")
@@ -632,6 +786,12 @@ def package_job(job_name, job_folder, output_parent, make_excel):
         f.write(f"    Complete {target_language} translation only.\n")
         f.write(f"  {os.path.basename(review_path)}\n")
         f.write("    Chunks needing human review, with AI explanations.\n")
+        if bible_review_path:
+            f.write(f"  {os.path.basename(bible_review_path)}\n")
+            f.write("    Bible verse references the API refused to look up.\n")
+            f.write("    The translator produced inline renderings for these\n")
+            f.write("    verses — a human MUST verify them against the\n")
+            f.write(f"    published {target_language} Bible before delivery.\n")
         if make_excel:
             f.write(f"  {job_name}_evaluation_summary.xlsx\n")
             f.write("    Per-chunk scores table with averages.\n")

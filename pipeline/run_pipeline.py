@@ -23,12 +23,32 @@ import json
 import argparse
 from datetime import datetime
 
+# UNICODE FIX (April 2026): On Windows, Python's stdout defaults to cp1252,
+# which cannot encode characters outside Western European (e.g. Hungarian 'ő'
+# U+0151, 'ű' U+0171). When the eval loop printed a parse-error message that
+# happened to contain one of those characters, the whole subprocess crashed
+# with UnicodeEncodeError and the eval results for that run were lost.
+# Reconfiguring stdout to UTF-8 with errors='replace' makes printing any
+# Unicode character safe: worst case, an un-displayable character shows as
+# '?' in the terminal, but the process never crashes and file output (which
+# already uses explicit encoding="utf-8") is unaffected.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except AttributeError:
+    # Python < 3.7 doesn't have reconfigure; we require 3.7+ anyway.
+    pass
+
 sys.path.insert(0, os.path.dirname(__file__))
 from config import SOURCE_LANGUAGE, DEFAULT_TARGET
 from chunker import ingest_document, detect_articles, chunk_text, save_chunks
 from translator import translate_chunks
 from eval.evaluator import full_evaluation
 from improver import verified_improve, needs_improvement
+from quote_handler import (
+    clear_bible_lookup_failures,
+    get_bible_lookup_failures,
+)
 
 
 def main():
@@ -151,18 +171,55 @@ def main():
     if not doc_context:
         doc_context = f"Source document: {doc['filename']}"
 
+    # Reset the module-level Bible-lookup human-review queue so it
+    # only holds failures from THIS run, not leftover state from
+    # a prior invocation in the same Python process.
+    clear_bible_lookup_failures()
+
+    # Precompute the translations output path and pass it as a
+    # checkpoint so translate_chunks writes progress incrementally
+    # after every chunk. This way, if anything crashes mid-run,
+    # the partial JSON is already on disk and we don't lose the
+    # chunks we've already paid the API for.
+    translations_path = os.path.join(data_dir, f"translations_{target_lower}_{timestamp}.json")
+
     results = translate_chunks(
         chunks=chunks,
         target_language=args.target,
         glossary_path=glossary_path,
         source_language=source_lang,
         document_context=doc_context,
+        checkpoint_path=translations_path,
     )
 
-    translations_path = os.path.join(data_dir, f"translations_{target_lower}_{timestamp}.json")
+    # Final save (identical to the last checkpoint write, but makes
+    # the behavior explicit for readers and guards the no-checkpoint path).
     with open(translations_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     print(f"\n  Translations saved to {translations_path}")
+
+    # Write the Bible-lookup human-review sidecar if any lookups failed
+    # during this run. This is how the team finds out which chunks had
+    # Bible verses the API refused to resolve, so they can verify the
+    # translator's inline rendering against the canonical target-language
+    # Bible before sending the translation out.
+    bible_failures = get_bible_lookup_failures()
+    if bible_failures:
+        review_path = os.path.join(
+            data_dir, f"bible_lookup_review_{target_lower}_{timestamp}.json"
+        )
+        with open(review_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "target_language": args.target,
+                "source_document": doc["filename"],
+                "timestamp": timestamp,
+                "failure_count": len(bible_failures),
+                "failures": bible_failures,
+            }, f, indent=2, ensure_ascii=False)
+        print(f"\n  !! {len(bible_failures)} Bible lookup(s) failed and need human review.")
+        print(f"     Review queue saved to: {review_path}")
+        print(f"     The translator produced inline renderings for these verses;")
+        print(f"     a human must verify them against the published Bible before delivery.")
 
     # =================================================================
     # STEP 5 + 6: EVALUATE -> IMPROVE LOOP

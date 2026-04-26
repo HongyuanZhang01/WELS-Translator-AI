@@ -72,8 +72,15 @@ def detect_articles(text):
         r'(?m)^((?:DAS|DER|DIE|EINE|VON)\s+[A-ZÄÖÜ].{3,60})$',
         # German part headers: "Der erste Teil", "Der zweite Teil", "Der dritte Teil"
         r'(?m)^(Der\s+(?:erste|zweite|dritte|vierte|fünfte)\s+Teil)$',
-        # Generic numbered headers like "I. Of God"
-        r'(?m)^([IVXLCDM]+\.\s+[A-Z].+?)$',
+        # Generic numbered headers like "I. Of God", "II. Of Sin", "IV. Justification"
+        # IMPORTANT: we require the line to start with I/V/X/L (or a multi-char C/D/M)
+        # so single-letter C/D/M cannot match section labels like "C. Permission..."
+        # or name initials like "C. F. W. Walther". This regex demands either
+        #   (a) starts with I, V, X, or L (optionally followed by more Roman digits), OR
+        #   (b) starts with C, D, or M but must be followed by at least one more Roman digit
+        # Examples accepted: I., II., IV., IX., XIV., CI., DC., MCM.
+        # Examples rejected: C., D., M.  (single letters that could be section/initials)
+        r'(?m)^((?:[IVXL][IVXLCDM]*|[CDM][IVXLCDM]+)\.\s+[A-Z].+?)$',
     ]
 
     articles = []
@@ -122,6 +129,22 @@ def chunk_text(text, chunk_size=1500, overlap_size=200, articles=None):
     # This ensures a chunk about "Justification" doesn't bleed into
     # a chunk about "The Church" — the theological context stays clean.
     if articles:
+        # PREAMBLE CATCH: anything before the first detected article header
+        # (introductions, abstracts, epigraphs, table of contents, opening
+        # paragraphs) MUST still be translated. Without this, any text before
+        # articles[0]["start"] was being silently dropped — that's how the
+        # wauwatosa and otto deliveries ended up starting halfway through.
+        if articles[0]["start"] > 0:
+            preamble_text = text[:articles[0]["start"]].strip()
+            if preamble_text:
+                preamble_chunks = _split_into_chunks(
+                    preamble_text, chunk_size, overlap_size, chunk_id
+                )
+                for chunk in preamble_chunks:
+                    chunk["article"] = "(preamble)"
+                    chunks.append(chunk)
+                    chunk_id += 1
+
         for article in articles:
             article_text = text[article["start"]:article["end"]].strip()
             if not article_text:
@@ -146,6 +169,27 @@ def chunk_text(text, chunk_size=1500, overlap_size=200, articles=None):
         chunk["context_before"] = chunks[i - 1]["text"][-overlap_size:] if i > 0 else ""
         chunk["context_after"] = chunks[i + 1]["text"][:overlap_size] if i < len(chunks) - 1 else ""
         chunk["position"] = f"{i + 1}/{len(chunks)}"
+
+    # COVERAGE SANITY CHECK: a chunker bug in April 2026 silently dropped
+    # everything before the first detected article header, so wauwatosa and
+    # otto deliveries started translating halfway through the source. Never
+    # again. If the chunks together don't cover at least 90% of the source
+    # text, something is wrong — refuse to proceed and make the caller fix it.
+    # (We use 90% rather than 100% to allow for whitespace trimming, empty
+    # article bodies, and the natural gaps that .strip() removes.)
+    chunked_total = sum(len(c["text"]) for c in chunks)
+    source_total = len(text.strip())
+    if source_total > 0:
+        coverage = chunked_total / source_total
+        if coverage < 0.90:
+            raise ValueError(
+                f"Chunker coverage sanity check FAILED: chunks contain only "
+                f"{chunked_total:,} chars ({coverage * 100:.1f}%) of source text "
+                f"({source_total:,} chars). This usually means detect_articles() "
+                f"matched a line that isn't actually a section header and "
+                f"silently discarded the content before it. Inspect the source, "
+                f"tighten the header patterns, and re-run. Refusing to proceed."
+            )
 
     return chunks
 
